@@ -10,7 +10,7 @@
  *
  * Used for configuring routes. See {@link ng.$route $route} for an example.
  */
-function $RouteProvider(){
+function $RouteProvider($utils){
   var routes = {};
 
   /**
@@ -103,7 +103,7 @@ function $RouteProvider(){
    * Adds a new route definition to the `$route` service.
    */
   this.when = function(path, route) {
-    routes[path] = extend({reloadOnSearch: true, caseInsensitiveMatch: false}, route);
+    routes[path] = $utils.extend({reloadOnSearch: true, caseInsensitiveMatch: false}, route);
 
     // create redirection for trailing slashes
     if (path) {
@@ -386,7 +386,7 @@ function $RouteProvider(){
 
       var match = on.match(new RegExp(regex, whenProperties.caseInsensitiveMatch ? 'i' : ''));
       if (match) {
-        forEach(params, function(name, index) {
+        $utils.forEach(params, function(name, index) {
           dst[name] = match[index + 1];
         });
       }
@@ -398,9 +398,9 @@ function $RouteProvider(){
           last = $route.current;
 
       if (next && last && next.$route === last.$route
-          && equals(next.pathParams, last.pathParams) && !next.reloadOnSearch && !forceReload) {
+          && $utils.equals(next.pathParams, last.pathParams) && !next.reloadOnSearch && !forceReload) {
         last.params = next.params;
-        copy(last.params, $routeParams);
+        $utils.copy(last.params, $routeParams);
         $rootScope.$broadcast('$routeUpdate', last);
       } else if (next || last) {
         forceReload = false;
@@ -408,7 +408,7 @@ function $RouteProvider(){
         $route.current = next;
         if (next) {
           if (next.redirectTo) {
-            if (isString(next.redirectTo)) {
+            if ($utils.isString(next.redirectTo)) {
               $location.path(interpolate(next.redirectTo, next.params)).search(next.params)
                        .replace();
             } else {
@@ -421,28 +421,28 @@ function $RouteProvider(){
         $q.when(next).
           then(function() {
             if (next) {
-              var locals = extend({}, next.resolve),
+              var locals = $utils.extend({}, next.resolve),
                   template;
 
-              forEach(locals, function(value, key) {
-                locals[key] = isString(value) ? $injector.get(value) : $injector.invoke(value);
+                $utils.forEach(locals, function(value, key) {
+                locals[key] = $utils.isString(value) ? $injector.get(value) : $injector.invoke(value);
               });
 
-              if (isDefined(template = next.template)) {
-                if (isFunction(template)) {
+              if ($utils.isDefined(template = next.template)) {
+                if ($utils.isFunction(template)) {
                   template = template(next.params);
                 }
-              } else if (isDefined(template = next.templateUrl)) {
-                if (isFunction(template)) {
+              } else if ($utils.isDefined(template = next.templateUrl)) {
+                if ($utils.isFunction(template)) {
                   template = template(next.params);
                 }
-                if (isDefined(template)) {
+                if ($utils.isDefined(template)) {
                   next.loadedTemplateUrl = template;
                   template = $http.get(template, {cache: $templateCache}).
                       then(function(response) { return response.data; });
                 }
               }
-              if (isDefined(template)) {
+              if ($utils.isDefined(template)) {
                 locals['$template'] = template;
               }
               return $q.all(locals);
@@ -453,7 +453,7 @@ function $RouteProvider(){
             if (next == $route.current) {
               if (next) {
                 next.locals = locals;
-                copy(next.params, $routeParams);
+                  $utils.copy(next.params, $routeParams);
               }
               $rootScope.$broadcast('$routeChangeSuccess', next, last);
             }
@@ -472,16 +472,16 @@ function $RouteProvider(){
     function parseRoute() {
       // Match a route
       var params, match;
-      forEach(routes, function(route, path) {
+      $utils.forEach(routes, function(route, path) {
         if (!match && (params = switchRouteMatcher($location.path(), path, route))) {
-          match = inherit(route, {
-            params: extend({}, $location.search(), params),
+          match = $utils.inherit(route, {
+            params: $utils.extend({}, $location.search(), params),
             pathParams: params});
           match.$route = route;
         }
       });
       // No route matched; fallback to "otherwise" route
-      return match || routes[null] && inherit(routes[null], {params: {}, pathParams:{}});
+      return match || routes[null] && $utils.inherit(routes[null], {params: {}, pathParams:{}});
     }
 
     /**
@@ -489,7 +489,7 @@ function $RouteProvider(){
      */
     function interpolate(string, params) {
       var result = [];
-      forEach((string||'').split(':'), function(segment, i) {
+        $utils.forEach((string||'').split(':'), function(segment, i) {
         if (i == 0) {
           result.push(segment);
         } else {
@@ -504,3 +504,4 @@ function $RouteProvider(){
     }
   }];
 }
+$RouteProvider.$inject = ['$utils'];
