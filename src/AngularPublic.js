@@ -51,6 +51,9 @@ function publishExternalAPI(angular){
     'callbacks': {counter: 0},
     'noConflict': noConflict
   });
+  var $utils = extend(angular, {
+      inherit: inherit
+  });
 
   angularModule = setupModuleLoader(window);
   try {
@@ -61,7 +64,9 @@ function publishExternalAPI(angular){
 
   angularModule('ng', ['ngLocale'], ['$provide',
     function ngModule($provide) {
-      $provide.provider('$compile', $CompileProvider).
+        $provide.constant('$utils', $utils);
+
+        $provide.provider('$compile', $CompileProvider).
         directive({
             a: htmlAnchorDirective,
             input: inputDirective,
@@ -128,6 +133,7 @@ function publishExternalAPI(angular){
         $timeout: $TimeoutProvider,
         $window: $WindowProvider
       });
+
     }
   ]);
 }
